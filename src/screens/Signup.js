@@ -117,15 +117,6 @@ export default function Signup() {
               />
               {errors.email && <div className="invalid-feedback" style={{display: 'block'}}>{errors.email}</div>}
             </div>
-            {/* <div className="m-3">
-              <label htmlFor="address" className="form-label">Address</label>
-              <fieldset>
-                <input type="text" className="form-control" name='address' placeholder='"Click below for fetching address"' value={address} onChange={(e)=>setAddress(e.target.value)} aria-describedby="emailHelp" />
-              </fieldset>
-            </div>
-            <div className="m-3">
-              <button type="button" onClick={handleClick} name="geolocation" className=" btn btn-success">Click for current Location </button>
-            </div> */}
             <div className="m-3">
               <label htmlFor="exampleInputPassword1" className="form-label">Password</label>
               <div className={`input-group ${errors.password ? 'mb-1' : ''}`}>
