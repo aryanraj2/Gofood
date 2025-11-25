@@ -1,26 +1,22 @@
 const mongoose = require('mongoose')
-// const mongoDbClient = require("mongodb").MongoClient
-const mongoURI = 'mongodb://<!#@!#@>:"!@!@"@mernclustedsfhcbshdbf$##################,merncluster-shard-00-01.d1d4z.mongodb.net:27017,merncluster-shard-00-02.d1d4z.mongodb.net:27017/Customer?ssl=true&replicaSet=atlas-eusy5p-shard-0&authSource=admin&retryWrites=true&w=majority' // Customer change url to your db you created in atlas
+
+const mongoURI = 'mongodb+srv://aryan:aryan123@cluster0.520m4fw.mongodb.net/?appName=Cluster0'
 
 module.exports = function (callback) {
-    mongoose.connect(mongoURI, { useNewUrlParser: true }, async (err, result) => {
-        // mongoDbClient.connect(mongoURI, { useNewUrlParser: true }, async(err, result) => {
-        if (err) console.log("---" + err)
-        else {
-            // var database =
+    mongoose.connect(mongoURI, { 
+        useNewUrlParser: true,
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 10000,
+        socketTimeoutMS: 45000,
+        family: 4
+    }, async (err, result) => {
+        if (err) {
+            console.log("MongoDB connection error: " + err)
+            callback(err, null, null)
+        } else {
             console.log("connected to mongo")
-            const foodCollection = await mongoose.connection.db.collection("food_items");
-            foodCollection.find({}).toArray(async function (err, data) {
-                const categoryCollection = await mongoose.connection.db.collection("Categories");
-                categoryCollection.find({}).toArray(async function (err, Catdata) {
-                    callback(err, data, Catdata);
-
-                })
-            });
-            // listCollections({name: 'food_items'}).toArray(function (err, database) {
-            // });
-            //     module.exports.Collection = database;
-            // });
+            // Food/category collections removed — app now focuses on auth/dashboard only
+            callback(null, null, null)
         }
     })
 };

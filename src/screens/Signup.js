@@ -2,49 +2,38 @@ import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import Navbar from '../components/Navbar';
 export default function Signup() {
-  const [credentials, setCredentials] = useState({ name: "", email: "", password: "", geolocation: "" })
-  let [address, setAddress] = useState("");
+  const [credentials, setCredentials] = useState({ name: "", email: "", password: "" })
+  const [showPassword, setShowPassword] = useState(false)
+  const [errors, setErrors] = useState({ name: "", email: "", password: "" })
   let navigate = useNavigate()
 
-  const handleClick = async (e) => {
-    e.preventDefault();
-    let navLocation = () => {
-      return new Promise((res, rej) => {
-        navigator.geolocation.getCurrentPosition(res, rej);
-      });
-    }
-    let latlong = await navLocation().then(res => {
-      let latitude = res.coords.latitude;
-      let longitude = res.coords.longitude;
-      return [latitude, longitude]
-    })
-    // console.log(latlong)
-    let [lat, long] = latlong
-    console.log(lat, long)
-    const response = await fetch("http://localhost:5000/api/auth/getlocation", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ latlong: { lat, long } })
-
-    });
-    const { location } = await response.json()
-    console.log(location);
-    setAddress(location);
-    setCredentials({ ...credentials, [e.target.name]: location })
-  }
+  // Location/geo helper removed — schema no longer stores location
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const response = await fetch("http://localhost:5000/api/auth/createuser", {
+    
+    // Validation
+    let newErrors = { name: "", email: "", password: "" };
+    
+    newErrors.name = validateField("name", credentials.name);
+    newErrors.email = validateField("email", credentials.email);
+    newErrors.password = validateField("password", credentials.password);
+    
+    setErrors(newErrors);
+    
+    // If there are errors, don't proceed
+    if (newErrors.name || newErrors.email || newErrors.password) {
+      return;
+    }
+    
+  const response = await fetch("http://localhost:5001/api/auth/createuser", {
       // credentials: 'include',
       // Origin:"http://localhost:3000/login",
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ name: credentials.name, email: credentials.email, password: credentials.password, location: credentials.geolocation })
+      body: JSON.stringify({ name: credentials.name, email: credentials.email, password: credentials.password })
 
     });
     const json = await response.json()
@@ -64,8 +53,38 @@ export default function Signup() {
     setCredentials({ ...credentials, [e.target.name]: e.target.value })
   }
 
+  const validateField = (fieldName, value) => {
+    let error = "";
+    
+    if (fieldName === "name") {
+      if (!value.trim()) {
+        error = "Name is required";
+      }
+    } else if (fieldName === "email") {
+      if (!value.trim()) {
+        error = "Email is required";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        error = "Please enter a valid email";
+      }
+    } else if (fieldName === "password") {
+      if (!value.trim()) {
+        error = "Password is required";
+      } else if (value.length < 5) {
+        error = "Password must be at least 5 characters";
+      }
+    }
+    
+    return error;
+  }
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    const error = validateField(name, value);
+    setErrors({ ...errors, [name]: error });
+  }
+
   return (
-    <div style={{ backgroundImage: 'url("https://images.pexels.com/photos/1565982/pexels-photo-1565982.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1")', backgroundSize: 'cover',height: '100vh' }}>
+    <div>
       <div>
       <Navbar />
       </div>
@@ -74,13 +93,31 @@ export default function Signup() {
           <form className='w-50 m-auto mt-5 border bg-dark border-success rounded' onSubmit={handleSubmit}>
             <div className="m-3">
               <label htmlFor="name" className="form-label">Name</label>
-              <input type="text" className="form-control" name='name' value={credentials.name} onChange={onChange} aria-describedby="emailHelp" />
+              <input 
+                type="text" 
+                className={`form-control ${errors.name ? 'is-invalid' : ''}`} 
+                name='name' 
+                value={credentials.name} 
+                onChange={onChange}
+                onBlur={handleBlur}
+                aria-describedby="emailHelp" 
+              />
+              {errors.name && <div className="invalid-feedback" style={{display: 'block'}}>{errors.name}</div>}
             </div>
             <div className="m-3">
               <label htmlFor="email" className="form-label">Email address</label>
-              <input type="email" className="form-control" name='email' value={credentials.email} onChange={onChange} aria-describedby="emailHelp" />
+              <input 
+                type="email" 
+                className={`form-control ${errors.email ? 'is-invalid' : ''}`} 
+                name='email' 
+                value={credentials.email} 
+                onChange={onChange}
+                onBlur={handleBlur}
+                aria-describedby="emailHelp" 
+              />
+              {errors.email && <div className="invalid-feedback" style={{display: 'block'}}>{errors.email}</div>}
             </div>
-            <div className="m-3">
+            {/* <div className="m-3">
               <label htmlFor="address" className="form-label">Address</label>
               <fieldset>
                 <input type="text" className="form-control" name='address' placeholder='"Click below for fetching address"' value={address} onChange={(e)=>setAddress(e.target.value)} aria-describedby="emailHelp" />
@@ -88,10 +125,30 @@ export default function Signup() {
             </div>
             <div className="m-3">
               <button type="button" onClick={handleClick} name="geolocation" className=" btn btn-success">Click for current Location </button>
-            </div>
+            </div> */}
             <div className="m-3">
               <label htmlFor="exampleInputPassword1" className="form-label">Password</label>
-              <input type="password" className="form-control" value={credentials.password} onChange={onChange} name='password' />
+              <div className={`input-group ${errors.password ? 'mb-1' : ''}`}>
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  className={`form-control ${errors.password ? 'is-invalid' : ''}`} 
+                  value={credentials.password} 
+                  onChange={onChange}
+                  onBlur={handleBlur}
+                  name='password' 
+                />
+                <button 
+                  type="button" 
+                  className={`btn btn-outline-secondary ${errors.password ? 'is-invalid' : ''}`}
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex="-1"
+                >
+                  <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`} style={{fontSize: '1.2rem'}}>
+                    {showPassword ? '👁️‍🗨️' : '👁️'}
+                  </i>
+                </button>
+              </div>
+              {errors.password && <div className="invalid-feedback" style={{display: 'block'}}>{errors.password}</div>}
             </div>
             <button type="submit" className="m-3 btn btn-success">Submit</button>
             <Link to="/login" className="m-3 mx-1 btn btn-danger">Already a user</Link>
